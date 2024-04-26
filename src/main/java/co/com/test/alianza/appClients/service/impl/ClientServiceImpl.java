@@ -1,5 +1,8 @@
 package co.com.test.alianza.appClients.service.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
@@ -26,6 +29,16 @@ public class ClientServiceImpl implements IClientService{
 	@Override
 	public ResponseEntity<ResponseDTO> saveClient(ClientDTO clientDTO) {
 		log.info("saveClient "+ clientDTO);
+		
+		if(Objects.isNull(clientDTO.getSharedKey()) || clientDTO.getSharedKey().isEmpty()) {
+			clientDTO.setSharedKey(String.valueOf("1"));
+			List<Clients> clientes = clientRepository.findAllByOrderBySharedKeyDesc();
+			if(!clientes.isEmpty()) {
+				Integer valorAnterior = Integer.parseInt(clientes.get(0).getSharedKey());
+				clientDTO.setSharedKey(String.valueOf(valorAnterior+1));
+			}
+		}
+		
 		ResponseDTO response = null;
 		try {
 				response = Utils.mapearRespuesta(HttpStatus.CREATED.name(), HttpStatus.CREATED.value(),
@@ -80,12 +93,13 @@ public class ClientServiceImpl implements IClientService{
 		Optional<Clients> client = this.clientRepository.findById(sharedKey);
 		try {
 			if(client.isPresent()) {
+				List<Clients> clientes = new ArrayList<>();
+				clientes.add(client.get());
 				response = Utils.mapearRespuesta(HttpStatus.OK.name(), HttpStatus.OK.value(),
-						client);
+						clientes);
 			
 			}else {
-				response = Utils.mapearRespuesta(HttpStatus.NOT_FOUND.name(), HttpStatus.NOT_FOUND.value(),
-						client);
+				response = Utils.mapearRespuesta(HttpStatus.NOT_FOUND.name(), HttpStatus.NOT_FOUND.value());
 			}
 			
 		} catch (Exception e) {
